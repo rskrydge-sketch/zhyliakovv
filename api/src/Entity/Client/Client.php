@@ -10,6 +10,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Exception;
 
 #[ORM\Entity(repositoryClass: ClientRepository::class)]
 #[ORM\Table(name: 'clients')]
@@ -50,6 +51,9 @@ class Client
     #[ORM\Column(type: Types::INTEGER)]
     private int $updatedAt;
 
+    /**
+     * Client constructor.
+     */
     public function __construct()
     {
         $this->appointments = new ArrayCollection();
@@ -218,6 +222,7 @@ class Client
 
     /**
      * @return array<string, mixed>
+     * @throws Exception
      */
     public function toDetailArray(): array
     {

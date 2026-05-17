@@ -14,13 +14,12 @@ class ProcedureService
 
     /**
      * @param EntityManagerInterface $entityManager
-     * @param ServiceRepository      $serviceRepository
+     * @param ServiceRepository $serviceRepository
      */
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
         private readonly ServiceRepository      $serviceRepository
-    ) {
-    }
+    ) {}
 
     /**
      * @param string|null $search
@@ -57,7 +56,7 @@ class ProcedureService
         $service
             ->setName($data['name'])
             ->setDescription($data['description'] ?? null)
-            ->setBasePrice((string) $data['basePrice'])
+            ->setBasePrice((string)$data['basePrice'])
             ->setDurationMinutes($data['durationMinutes'] ?? null)
             ->setIsActive($data['isActive'] ?? true);
 
@@ -68,7 +67,7 @@ class ProcedureService
     }
 
     /**
-     * @param int                  $id
+     * @param int $id
      * @param array<string, mixed> $data
      * @return Service
      * @throws NotFoundHttpException
@@ -86,7 +85,7 @@ class ProcedureService
         }
 
         if (isset($data['basePrice'])) {
-            $service->setBasePrice((string) $data['basePrice']);
+            $service->setBasePrice((string)$data['basePrice']);
         }
 
         if (array_key_exists('durationMinutes', $data)) {
@@ -94,7 +93,7 @@ class ProcedureService
         }
 
         if (isset($data['isActive'])) {
-            $service->setIsActive((bool) $data['isActive']);
+            $service->setIsActive((bool)$data['isActive']);
         }
 
         $this->entityManager->flush();

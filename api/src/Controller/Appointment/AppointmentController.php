@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Controller\Appointment;
 
 use App\Services\Appointment\AppointmentService;
+use App\Services\Request\RequestService;
+use Exception;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -16,32 +18,44 @@ use Symfony\Component\Routing\Attribute\Route;
 class AppointmentController extends AbstractController
 {
 
+    private const REQUIRED_FIELDS = [
+        'clientId',
+        'serviceId',
+        'scheduledAt',
+        'price'
+    ];
+
     /**
      * @param AppointmentService $appointmentService
+     * @param RequestService $requestService
      */
     public function __construct(
-        private readonly AppointmentService $appointmentService
-    ) {
-    }
+        private readonly AppointmentService $appointmentService,
+        private readonly RequestService     $requestService
+    ) {}
 
     /**
      * @param Request $request
      * @return JsonResponse
+     * @throws Exception
      */
     #[Route('', methods: ['GET'])]
     public function list(Request $request): JsonResponse
     {
-        $clientId = $request->query->get('clientId') ? (int) $request->query->get('clientId') : null;
-        $date     = $request->query->get('date');
-        $status   = $request->query->get('status');
-        $page     = (int) $request->query->get('page', 1);
-        $limit    = (int) $request->query->get('limit', 50);
+        /** @var array<string, mixed> $queryParams */
+        $queryParams = $request->query->all();
+
+        $clientId = isset($queryParams['clientId']) ? (int)$queryParams['clientId'] : null;
+        $date = $queryParams['date'] ?? null;
+        $status = $queryParams['status'] ?? null;
+        $page = (int)($queryParams['page'] ?? 1);
+        $limit = (int)($queryParams['limit'] ?? 50);
 
         $result = $this->appointmentService->getList($clientId, $date, $status, $page, $limit);
-        $data   = array_map(fn($appointment) => $appointment->toListArray(), $result['data']);
+        $data = array_map(fn($appointment) => $appointment->toListArray(), $result['data']);
 
         return $this->json([
-            'data'       => $data,
+            'data' => $data,
             'totalItems' => $result['totalItems'],
         ]);
     }
@@ -49,6 +63,7 @@ class AppointmentController extends AbstractController
     /**
      * @param Request $request
      * @return JsonResponse
+     * @throws Exception
      */
     #[Route('', methods: ['POST'])]
     public function create(Request $request): JsonResponse
@@ -56,34 +71,21 @@ class AppointmentController extends AbstractController
         /** @var array<string, mixed> $data */
         $data = json_decode($request->getContent(), true) ?? [];
 
-        if (empty($data['clientId'])) {
-            return $this->json(['error' => 'clientId є обовʼязковим полем'], Response::HTTP_UNPROCESSABLE_ENTITY);
-        }
-
-        if (empty($data['serviceId'])) {
-            return $this->json(['error' => 'serviceId є обовʼязковим полем'], Response::HTTP_UNPROCESSABLE_ENTITY);
-        }
-
-        if (empty($data['scheduledAt'])) {
-            return $this->json(['error' => 'scheduledAt є обовʼязковим полем'], Response::HTTP_UNPROCESSABLE_ENTITY);
-        }
-
-        if (!isset($data['price'])) {
-            return $this->json(['error' => 'price є обовʼязковим полем'], Response::HTTP_UNPROCESSABLE_ENTITY);
-        }
+        $this->requestService->check($data, self::REQUIRED_FIELDS);
 
         try {
             $appointment = $this->appointmentService->create($data);
 
             return $this->json($appointment->toListArray(), Response::HTTP_CREATED);
-        } catch (NotFoundHttpException $e) {
-            return $this->json(['error' => $e->getMessage()], Response::HTTP_NOT_FOUND);
+        } catch (NotFoundHttpException $exception) {
+            return $this->json(['error' => $exception->getMessage()], Response::HTTP_NOT_FOUND);
         }
     }
 
     /**
      * @param int $id
      * @return JsonResponse
+     * @throws Exception
      */
     #[Route('/{id}', methods: ['GET'])]
     public function show(int $id): JsonResponse
@@ -92,15 +94,16 @@ class AppointmentController extends AbstractController
             $appointment = $this->appointmentService->getById($id);
 
             return $this->json($appointment->toListArray());
-        } catch (NotFoundHttpException $e) {
-            return $this->json(['error' => $e->getMessage()], Response::HTTP_NOT_FOUND);
+        } catch (NotFoundHttpException $exception) {
+            return $this->json(['error' => $exception->getMessage()], Response::HTTP_NOT_FOUND);
         }
     }
 
     /**
      * @param Request $request
-     * @param int     $id
+     * @param int $id
      * @return JsonResponse
+     * @throws Exception
      */
     #[Route('/{id}', methods: ['PATCH'])]
     public function update(Request $request, int $id): JsonResponse
@@ -112,8 +115,8 @@ class AppointmentController extends AbstractController
             $appointment = $this->appointmentService->update($id, $data);
 
             return $this->json($appointment->toListArray());
-        } catch (NotFoundHttpException $e) {
-            return $this->json(['error' => $e->getMessage()], Response::HTTP_NOT_FOUND);
+        } catch (NotFoundHttpException $exception) {
+            return $this->json(['error' => $exception->getMessage()], Response::HTTP_NOT_FOUND);
         }
     }
 
@@ -128,8 +131,8 @@ class AppointmentController extends AbstractController
             $this->appointmentService->delete($id);
 
             return $this->json(null, Response::HTTP_NO_CONTENT);
-        } catch (NotFoundHttpException $e) {
-            return $this->json(['error' => $e->getMessage()], Response::HTTP_NOT_FOUND);
+        } catch (NotFoundHttpException $exception) {
+            return $this->json(['error' => $exception->getMessage()], Response::HTTP_NOT_FOUND);
         }
     }
 

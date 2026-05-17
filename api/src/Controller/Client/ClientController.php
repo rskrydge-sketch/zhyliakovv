@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Controller\Client;
 
 use App\Services\Client\ClientService;
+use App\Services\Request\RequestService;
+use Exception;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -17,13 +19,16 @@ use Symfony\Component\Routing\Attribute\Route;
 class ClientController extends AbstractController
 {
 
+    private const REQUIRED_FIELDS = ['nickname'];
+
     /**
      * @param ClientService $clientService
+     * @param RequestService $requestService
      */
     public function __construct(
-        private readonly ClientService $clientService
-    ) {
-    }
+        private readonly ClientService  $clientService,
+        private readonly RequestService $requestService
+    ) {}
 
     /**
      * @param Request $request
@@ -32,9 +37,12 @@ class ClientController extends AbstractController
     #[Route('', methods: ['GET'])]
     public function list(Request $request): JsonResponse
     {
-        $search = $request->query->get('search');
-        $page   = (int) $request->query->get('page', 1);
-        $limit  = (int) $request->query->get('limit', 50);
+        /** @var array<string, mixed> $queryParams */
+        $queryParams = $request->query->all();
+
+        $search = $queryParams['search'] ?? null;
+        $page = (int)($queryParams['page'] ?? 1);
+        $limit = (int)($queryParams['limit'] ?? 50);
 
         $result = $this->clientService->getList($search, $page, $limit);
 
@@ -49,6 +57,7 @@ class ClientController extends AbstractController
     /**
      * @param Request $request
      * @return JsonResponse
+     * @throws Exception
      */
     #[Route('', methods: ['POST'])]
     public function create(Request $request): JsonResponse
@@ -56,22 +65,21 @@ class ClientController extends AbstractController
         /** @var array<string, mixed> $data */
         $data = json_decode($request->getContent(), true) ?? [];
 
-        if (empty($data['nickname'])) {
-            return $this->json(['error' => 'Нікнейм є обовʼязковим полем'], Response::HTTP_UNPROCESSABLE_ENTITY);
-        }
+        $this->requestService->check($data, self::REQUIRED_FIELDS);
 
         try {
             $client = $this->clientService->create($data);
 
             return $this->json($client->toDetailArray(), Response::HTTP_CREATED);
-        } catch (ConflictHttpException $e) {
-            return $this->json(['error' => $e->getMessage()], Response::HTTP_CONFLICT);
+        } catch (ConflictHttpException $exception) {
+            return $this->json(['error' => $exception->getMessage()], Response::HTTP_CONFLICT);
         }
     }
 
     /**
      * @param int $id
      * @return JsonResponse
+     * @throws Exception
      */
     #[Route('/{id}', methods: ['GET'])]
     public function show(int $id): JsonResponse
@@ -80,15 +88,16 @@ class ClientController extends AbstractController
             $client = $this->clientService->getById($id);
 
             return $this->json($client->toDetailArray());
-        } catch (NotFoundHttpException $e) {
-            return $this->json(['error' => $e->getMessage()], Response::HTTP_NOT_FOUND);
+        } catch (NotFoundHttpException $exception) {
+            return $this->json(['error' => $exception->getMessage()], Response::HTTP_NOT_FOUND);
         }
     }
 
     /**
      * @param Request $request
-     * @param int     $id
+     * @param int $id
      * @return JsonResponse
+     * @throws Exception
      */
     #[Route('/{id}', methods: ['PATCH'])]
     public function update(Request $request, int $id): JsonResponse
@@ -100,10 +109,10 @@ class ClientController extends AbstractController
             $client = $this->clientService->update($id, $data);
 
             return $this->json($client->toDetailArray());
-        } catch (NotFoundHttpException $e) {
-            return $this->json(['error' => $e->getMessage()], Response::HTTP_NOT_FOUND);
-        } catch (ConflictHttpException $e) {
-            return $this->json(['error' => $e->getMessage()], Response::HTTP_CONFLICT);
+        } catch (NotFoundHttpException $exception) {
+            return $this->json(['error' => $exception->getMessage()], Response::HTTP_NOT_FOUND);
+        } catch (ConflictHttpException $exception) {
+            return $this->json(['error' => $exception->getMessage()], Response::HTTP_CONFLICT);
         }
     }
 
@@ -118,8 +127,8 @@ class ClientController extends AbstractController
             $this->clientService->delete($id);
 
             return $this->json(null, Response::HTTP_NO_CONTENT);
-        } catch (NotFoundHttpException $e) {
-            return $this->json(['error' => $e->getMessage()], Response::HTTP_NOT_FOUND);
+        } catch (NotFoundHttpException $exception) {
+            return $this->json(['error' => $exception->getMessage()], Response::HTTP_NOT_FOUND);
         }
     }
 

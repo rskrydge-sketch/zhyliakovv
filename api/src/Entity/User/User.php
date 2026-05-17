@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Entity\User;
 
 use App\Repository\Entity\User\UserRepository;
+use DateTimeImmutable;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Exception;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 
@@ -113,11 +115,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     }
 
     /**
-     * @return \DateTimeImmutable
+     * @return DateTimeImmutable
+     * @throws Exception
      */
-    public function getCreatedAt(): \DateTimeImmutable
+    public function getCreatedAt(): DateTimeImmutable
     {
-        return new \DateTimeImmutable('@' . $this->createdAt);
+        return new DateTimeImmutable('@' . $this->createdAt);
     }
 
     /**
@@ -132,8 +135,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     /**
      * @return void
      */
-    public function eraseCredentials(): void
-    {
-    }
+    public function eraseCredentials(): void {}
 
 }

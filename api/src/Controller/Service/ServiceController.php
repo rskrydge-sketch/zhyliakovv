@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Controller\Service;
 
+use App\Services\Request\RequestService;
 use App\Services\Service\ProcedureService;
+use Exception;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -16,24 +18,34 @@ use Symfony\Component\Routing\Attribute\Route;
 class ServiceController extends AbstractController
 {
 
+    private const REQUIRED_FIELDS = [
+        'name',
+        'basePrice'
+    ];
+
     /**
      * @param ProcedureService $procedureService
+     * @param RequestService $requestService
      */
     public function __construct(
-        private readonly ProcedureService $procedureService
-    ) {
-    }
+        private readonly ProcedureService $procedureService,
+        private readonly RequestService   $requestService
+    ) {}
 
     /**
      * @param Request $request
      * @return JsonResponse
+     * @throws Exception
      */
     #[Route('', methods: ['GET'])]
     public function list(Request $request): JsonResponse
     {
-        $search   = $request->query->get('search');
+        /** @var array<string, mixed> $queryParams */
+        $queryParams = $request->query->all();
+
+        $search = $queryParams['search'] ?? null;
         $services = $this->procedureService->getList($search);
-        $data     = array_map(fn($service) => $service->toArray(), $services);
+        $data = array_map(fn($service) => $service->toArray(), $services);
 
         return $this->json(['data' => $data]);
     }
@@ -41,6 +53,7 @@ class ServiceController extends AbstractController
     /**
      * @param Request $request
      * @return JsonResponse
+     * @throws Exception
      */
     #[Route('', methods: ['POST'])]
     public function create(Request $request): JsonResponse
@@ -48,13 +61,7 @@ class ServiceController extends AbstractController
         /** @var array<string, mixed> $data */
         $data = json_decode($request->getContent(), true) ?? [];
 
-        if (empty($data['name'])) {
-            return $this->json(['error' => 'Назва послуги є обовʼязковим полем'], Response::HTTP_UNPROCESSABLE_ENTITY);
-        }
-
-        if (!isset($data['basePrice']) || $data['basePrice'] < 0) {
-            return $this->json(['error' => 'Базова ціна є обовʼязковою і має бути >= 0'], Response::HTTP_UNPROCESSABLE_ENTITY);
-        }
+        $this->requestService->check($data, self::REQUIRED_FIELDS);
 
         $service = $this->procedureService->create($data);
 
@@ -63,8 +70,9 @@ class ServiceController extends AbstractController
 
     /**
      * @param Request $request
-     * @param int     $id
+     * @param int $id
      * @return JsonResponse
+     * @throws Exception
      */
     #[Route('/{id}', methods: ['PATCH'])]
     public function update(Request $request, int $id): JsonResponse
@@ -76,8 +84,8 @@ class ServiceController extends AbstractController
             $service = $this->procedureService->update($id, $data);
 
             return $this->json($service->toArray());
-        } catch (NotFoundHttpException $e) {
-            return $this->json(['error' => $e->getMessage()], Response::HTTP_NOT_FOUND);
+        } catch (NotFoundHttpException $exception) {
+            return $this->json(['error' => $exception->getMessage()], Response::HTTP_NOT_FOUND);
         }
     }
 
@@ -92,8 +100,8 @@ class ServiceController extends AbstractController
             $this->procedureService->delete($id);
 
             return $this->json(null, Response::HTTP_NO_CONTENT);
-        } catch (NotFoundHttpException $e) {
-            return $this->json(['error' => $e->getMessage()], Response::HTTP_NOT_FOUND);
+        } catch (NotFoundHttpException $exception) {
+            return $this->json(['error' => $exception->getMessage()], Response::HTTP_NOT_FOUND);
         }
     }
 

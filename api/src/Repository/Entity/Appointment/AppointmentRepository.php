@@ -23,54 +23,54 @@ class AppointmentRepository extends ServiceEntityRepository
     }
 
     /**
-     * @param int|null    $clientId
+     * @param int|null $clientId
      * @param string|null $date
      * @param string|null $status
-     * @param int         $page
-     * @param int         $limit
+     * @param int $page
+     * @param int $limit
      * @return array{data: Appointment[], totalItems: int}
      */
     public function findByFilters(?int $clientId, ?string $date, ?string $status, int $page = 1, int $limit = 50): array
     {
-        $qb = $this->createQueryBuilder('a')
-            ->join('a.client', 'c')
-            ->join('a.service', 's')
-            ->orderBy('a.scheduledAt', 'DESC');
+        $queryBuilder = $this->createQueryBuilder('appointment')
+            ->join('appointment.client', 'client')
+            ->join('appointment.service', 'service')
+            ->orderBy('appointment.scheduledAt', 'DESC');
 
         if ($clientId) {
-            $qb
-                ->andWhere('c.id = :clientId')
+            $queryBuilder
+                ->andWhere('client.id = :clientId')
                 ->setParameter('clientId', $clientId);
         }
 
         if ($date) {
-            $qb
-                ->andWhere('DATE(a.scheduledAt) = :date')
+            $queryBuilder
+                ->andWhere('DATE(appointment.scheduledAt) = :date')
                 ->setParameter('date', $date);
         }
 
         if ($status) {
-            $qb
-                ->andWhere('a.status = :status')
+            $queryBuilder
+                ->andWhere('appointment.status = :status')
                 ->setParameter('status', $status);
         }
 
         /** @var int $totalItems */
-        $totalItems = (clone $qb)
-            ->select('COUNT(a.id)')
+        $totalItems = (clone $queryBuilder)
+            ->select('COUNT(appointment.id)')
             ->getQuery()
             ->getSingleScalarResult();
 
-        $qb
+        $queryBuilder
             ->setFirstResult(($page - 1) * $limit)
             ->setMaxResults($limit);
 
         /** @var Appointment[] $data */
-        $data = $qb->getQuery()->getResult();
+        $data = $queryBuilder->getQuery()->getResult();
 
         return [
             'data'       => $data,
-            'totalItems' => (int) $totalItems,
+            'totalItems' => (int)$totalItems,
         ];
     }
 

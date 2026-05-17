@@ -15,18 +15,17 @@ class ClientService
 
     /**
      * @param EntityManagerInterface $entityManager
-     * @param ClientRepository       $clientRepository
+     * @param ClientRepository $clientRepository
      */
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
         private readonly ClientRepository       $clientRepository
-    ) {
-    }
+    ) {}
 
     /**
      * @param string|null $search
-     * @param int         $page
-     * @param int         $limit
+     * @param int $page
+     * @param int $limit
      * @return array{data: Client[], totalItems: int}
      */
     public function getList(?string $search, int $page, int $limit): array
@@ -78,7 +77,7 @@ class ClientService
     }
 
     /**
-     * @param int                  $id
+     * @param int $id
      * @param array<string, mixed> $data
      * @return Client
      * @throws NotFoundHttpException

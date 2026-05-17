@@ -33,14 +33,18 @@ zhyliakovv/
 │   │   │   ├── Client/
 │   │   │   ├── Service/
 │   │   │   └── User/
+│   │   ├── EventListener/      # Symfony event listeners
+│   │   │   └── RuntimeConstraintExceptionListener.php
 │   │   ├── Repository/         # Doctrine repositories з кастомними запитами
 │   │   │   └── Entity/...
 │   │   └── Services/           # Бізнес-логіка
 │   │       ├── Appointment/
 │   │       ├── Client/
+│   │       ├── Request/        # RequestService — валідація вхідних даних
 │   │       └── Service/
 │   ├── config/
 │   │   ├── jwt/                # RSA ключі (gitignored)
+│   │   ├── services.yaml       # Реєстрація EventListener'ів
 │   │   └── packages/
 │   │       ├── lexik_jwt_authentication.yaml
 │   │       └── security.yaml
@@ -58,53 +62,56 @@ zhyliakovv/
 │           ├── consts.js       # HTTP статуси, статуси записів
 │           └── cn.js           # Tailwind class merger
 ├── docker/                     # Dockerfile'и та nginx конфіги
-├── PROJECT.md
-├── ARCHITECTURE.md
-└── CLAUDE.md
+└── .claude/
+    ├── CLAUDE.md
+    ├── ARCHITECTURE.md
+    └── PROJECT.md
 ```
 
 ---
 
 ## Схема бази даних
 
+> Всі часові поля зберігаються як Unix timestamp (`INT`). Getter повертає `\DateTimeImmutable` або `\DateTime` через `new DateTimeImmutable('@' . $timestamp)`.
+
 ```
 users
-  id            INT PK
+  id            INT PK AUTO_INCREMENT
   email         VARCHAR(180) UNIQUE
   password      VARCHAR
   roles         JSON
-  created_at    DATETIME
+  created_at    INT   ← Unix timestamp
 
 clients
-  id            INT PK
+  id            INT PK AUTO_INCREMENT
   nickname      VARCHAR(100) UNIQUE NOT NULL   ← єдине обов'язкове поле
   name          VARCHAR(255) NULL
   phone         VARCHAR(30)  NULL
   instagram     VARCHAR(100) NULL
   notes         TEXT NULL
-  created_at    DATETIME
-  updated_at    DATETIME
+  created_at    INT   ← Unix timestamp
+  updated_at    INT   ← Unix timestamp
 
 services
-  id               INT PK
+  id               INT PK AUTO_INCREMENT
   name             VARCHAR(255)
   description      TEXT NULL
   base_price       DECIMAL(10,2)
   duration_minutes INT NULL
   is_active        BOOLEAN DEFAULT true
-  created_at       DATETIME
-  updated_at       DATETIME
+  created_at       INT   ← Unix timestamp
+  updated_at       INT   ← Unix timestamp
 
 appointments
-  id            INT PK
+  id            INT PK AUTO_INCREMENT
   client_id     INT FK → clients (ON DELETE CASCADE)
   service_id    INT FK → services
-  scheduled_at  DATETIME
+  scheduled_at  INT          ← Unix timestamp (setScheduledAt приймає \DateTime)
   price         DECIMAL(10,2)              ← індивідуальна ціна запису
   notes         TEXT NULL
-  status        ENUM(planned|completed|cancelled) DEFAULT planned
-  created_at    DATETIME
-  updated_at    DATETIME
+  status        VARCHAR(20) DEFAULT 'planned'  ('planned'|'completed'|'cancelled')
+  created_at    INT   ← Unix timestamp
+  updated_at    INT   ← Unix timestamp
 ```
 
 ---
@@ -125,7 +132,7 @@ appointments
 | Метод | URL | Опис |
 |-------|-----|------|
 | GET | `/api/clients` | Список (параметри: `search`, `page`, `limit`) |
-| POST | `/api/clients` | Створити |
+| POST | `/api/clients` | Створити (обов'язково: `nickname`) |
 | GET | `/api/clients/{id}` | Деталі + всі записи клієнта |
 | PATCH | `/api/clients/{id}` | Оновити |
 | DELETE | `/api/clients/{id}` | Видалити (каскадно видаляє записи) |
@@ -134,7 +141,7 @@ appointments
 | Метод | URL | Опис |
 |-------|-----|------|
 | GET | `/api/services` | Список (параметр: `search`) |
-| POST | `/api/services` | Створити |
+| POST | `/api/services` | Створити (обов'язково: `name`, `basePrice`) |
 | PATCH | `/api/services/{id}` | Оновити |
 | DELETE | `/api/services/{id}` | Видалити |
 
@@ -142,10 +149,36 @@ appointments
 | Метод | URL | Опис |
 |-------|-----|------|
 | GET | `/api/appointments` | Список (параметри: `date`, `clientId`, `status`, `page`, `limit`) |
-| POST | `/api/appointments` | Створити |
+| POST | `/api/appointments` | Створити (обов'язково: `clientId`, `serviceId`, `scheduledAt`, `price`) |
 | GET | `/api/appointments/{id}` | Деталі запису |
 | PATCH | `/api/appointments/{id}` | Оновити (в т.ч. зміна статусу) |
 | DELETE | `/api/appointments/{id}` | Видалити |
+
+---
+
+## Обробка помилок
+
+`RuntimeConstraintExceptionListener` перехоплює **будь-який** виняток і повертає JSON:
+
+```json
+{
+  "data": {
+    "code": 400,
+    "errors": ["Відсутні обовʼязкові поля: nickname;"]
+  }
+}
+```
+
+- HTTP-винятки (`NotFoundHttpException`, `UnprocessableEntityHttpException` тощо) → `getStatusCode()`
+- `RuntimeException` → `getCode()` (передається як другий аргумент у `throw`)
+- JSON в `getMessage()` → розпаковується в асоціативний масив помилок
+
+Реєстрація в `services.yaml`:
+```yaml
+App\EventListener\RuntimeConstraintExceptionListener:
+    tags:
+        - { name: kernel.event_listener, event: kernel.exception }
+```
 
 ---
 

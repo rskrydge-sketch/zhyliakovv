@@ -6,10 +6,12 @@ namespace App\Entity\Service;
 
 use App\Entity\Appointment\Appointment;
 use App\Repository\Entity\Service\ServiceRepository;
+use DateTimeImmutable;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Exception;
 
 #[ORM\Entity(repositoryClass: ServiceRepository::class)]
 #[ORM\Table(name: 'services')]
@@ -49,6 +51,9 @@ class Service
     #[ORM\Column(type: Types::INTEGER)]
     private int $updatedAt;
 
+    /**
+     * Service constructor.
+     */
     public function __construct()
     {
         $this->appointments = new ArrayCollection();
@@ -166,19 +171,21 @@ class Service
     }
 
     /**
-     * @return \DateTimeImmutable
+     * @return DateTimeImmutable
+     * @throws Exception
      */
-    public function getCreatedAt(): \DateTimeImmutable
+    public function getCreatedAt(): DateTimeImmutable
     {
-        return new \DateTimeImmutable('@' . $this->createdAt);
+        return new DateTimeImmutable('@' . $this->createdAt);
     }
 
     /**
-     * @return \DateTimeImmutable
+     * @return DateTimeImmutable
+     * @throws Exception
      */
-    public function getUpdatedAt(): \DateTimeImmutable
+    public function getUpdatedAt(): DateTimeImmutable
     {
-        return new \DateTimeImmutable('@' . $this->updatedAt);
+        return new DateTimeImmutable('@' . $this->updatedAt);
     }
 
     /**
@@ -202,6 +209,7 @@ class Service
 
     /**
      * @return array<string, mixed>
+     * @throws Exception
      */
     public function toArray(): array
     {
@@ -209,7 +217,7 @@ class Service
             'id'              => $this->getId(),
             'name'            => $this->getName(),
             'description'     => $this->getDescription(),
-            'basePrice'       => (float) $this->getBasePrice(),
+            'basePrice'       => (float)$this->getBasePrice(),
             'durationMinutes' => $this->getDurationMinutes(),
             'isActive'        => $this->isActive(),
             'createdAt'       => $this->getCreatedAt()->format('Y-m-d H:i:s'),

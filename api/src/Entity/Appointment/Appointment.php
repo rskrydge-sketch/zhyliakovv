@@ -7,8 +7,11 @@ namespace App\Entity\Appointment;
 use App\Entity\Client\Client;
 use App\Entity\Service\Service;
 use App\Repository\Entity\Appointment\AppointmentRepository;
+use DateTime;
+use DateTimeImmutable;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Exception;
 
 #[ORM\Entity(repositoryClass: AppointmentRepository::class)]
 #[ORM\Table(name: 'appointments')]
@@ -98,18 +101,19 @@ class Appointment
     }
 
     /**
-     * @return \DateTime
+     * @return DateTime
+     * @throws Exception
      */
-    public function getScheduledAt(): \DateTime
+    public function getScheduledAt(): DateTime
     {
-        return new \DateTime('@' . $this->scheduledAt);
+        return new DateTime('@' . $this->scheduledAt);
     }
 
     /**
-     * @param \DateTime $scheduledAt
+     * @param DateTime $scheduledAt
      * @return $this
      */
-    public function setScheduledAt(\DateTime $scheduledAt): self
+    public function setScheduledAt(DateTime $scheduledAt): self
     {
         $this->scheduledAt = $scheduledAt->getTimestamp();
 
@@ -174,19 +178,21 @@ class Appointment
     }
 
     /**
-     * @return \DateTimeImmutable
+     * @return DateTimeImmutable
+     * @throws Exception
      */
-    public function getCreatedAt(): \DateTimeImmutable
+    public function getCreatedAt(): DateTimeImmutable
     {
-        return new \DateTimeImmutable('@' . $this->createdAt);
+        return new DateTimeImmutable('@' . $this->createdAt);
     }
 
     /**
-     * @return \DateTimeImmutable
+     * @return DateTimeImmutable
+     * @throws Exception
      */
-    public function getUpdatedAt(): \DateTimeImmutable
+    public function getUpdatedAt(): DateTimeImmutable
     {
-        return new \DateTimeImmutable('@' . $this->updatedAt);
+        return new DateTimeImmutable('@' . $this->updatedAt);
     }
 
     /**
@@ -210,6 +216,7 @@ class Appointment
 
     /**
      * @return array<string, mixed>
+     * @throws Exception
      */
     public function toListArray(): array
     {
@@ -224,10 +231,10 @@ class Appointment
             'service'     => [
                 'id'        => $this->getService()->getId(),
                 'name'      => $this->getService()->getName(),
-                'basePrice' => (float) $this->getService()->getBasePrice(),
+                'basePrice' => (float)$this->getService()->getBasePrice(),
             ],
             'scheduledAt' => $this->getScheduledAt()->format('Y-m-d H:i:s'),
-            'price'       => (float) $this->getPrice(),
+            'price'       => (float)$this->getPrice(),
             'status'      => $this->getStatus(),
             'notes'       => $this->getNotes(),
             'createdAt'   => $this->getCreatedAt()->format('Y-m-d H:i:s'),

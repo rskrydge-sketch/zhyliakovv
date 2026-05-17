@@ -6,7 +6,7 @@ This file provides guidance to Claude Code when working with code in this reposi
 
 ## Project Overview
 
-> **To be filled** — describe the project purpose, domain, and key flows here once known.
+> Hair CRM для майстра з волосся. Один адмін — веде клієнтів, послуги та записи. Без реєстрації клієнтів.
 
 **Stack:**
 - Backend: Symfony 7.2, PHP 8.3, Doctrine ORM (MySQL 8.0)
@@ -206,6 +206,75 @@ class User
 }
 ```
 
+### No abbreviated variable or alias names
+
+Never use single-letter or shortened names for variables or DQL aliases:
+
+```php
+// WRONG
+$qb = $this->createQueryBuilder('c');
+catch (\Exception $e) { ... }
+
+// CORRECT
+$queryBuilder = $this->createQueryBuilder('client');
+catch (\Exception $exception) { ... }
+```
+
+This applies to DQL aliases in repositories — use full entity names:
+
+```php
+$queryBuilder = $this->createQueryBuilder('client')
+    ->orderBy('client.createdAt', 'DESC');
+```
+
+### Reading query params in controllers
+
+Always read all query params at once via `$request->query->all()`, then access the array:
+
+```php
+/** @var array<string, mixed> $queryParams */
+$queryParams = $request->query->all();
+
+$search = $queryParams['search'] ?? null;
+$page   = (int) ($queryParams['page'] ?? 1);
+$limit  = (int) ($queryParams['limit'] ?? 50);
+```
+
+### Required fields validation via RequestService
+
+Controllers declare required fields as a private constant and delegate validation to `RequestService::check()`. Never use manual `if (empty(...))` checks for required field validation.
+
+```php
+private const REQUIRED_FIELDS = ['clientId', 'serviceId', 'scheduledAt', 'price'];
+
+public function create(Request $request): JsonResponse
+{
+    /** @var array<string, mixed> $data */
+    $data = json_decode($request->getContent(), true) ?? [];
+
+    $this->requestService->check($data, self::REQUIRED_FIELDS);
+
+    // ...
+}
+```
+
+`check()` throws `RuntimeException` with HTTP status code as the exception code. `RuntimeConstraintExceptionListener` converts it to a JSON response automatically.
+
+### Exception handling — RuntimeConstraintExceptionListener
+
+All exceptions are handled globally by `App\EventListener\RuntimeConstraintExceptionListener`. It must be registered in `config/services.yaml`:
+
+```yaml
+App\EventListener\RuntimeConstraintExceptionListener:
+    tags:
+        - { name: kernel.event_listener, event: kernel.exception }
+```
+
+Response format:
+```json
+{ "data": { "code": 400, "errors": ["message"] } }
+```
+
 ### Directory structure (`src/`)
 
 ```
@@ -214,12 +283,13 @@ src/
 │   └── User/
 ├── Entity/            # Doctrine entities, grouped by domain
 │   └── User/
+├── EventListener/     # Symfony kernel event listeners
 ├── Repository/        # Doctrine repositories
 │   └── Entity/User/
 ├── Services/          # Business logic
+│   ├── Request/       # RequestService — валідація вхідних даних
 │   └── User/
-├── EventSubscriber/   # Symfony event subscribers
-├── Command/           # Console commands (Cron/)
+├── Command/           # Console commands
 └── Kernel.php
 ```
 

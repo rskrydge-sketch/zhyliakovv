@@ -28,17 +28,17 @@ class ServiceRepository extends ServiceEntityRepository
      */
     public function findBySearch(?string $search): array
     {
-        $qb = $this->createQueryBuilder('s')
-            ->orderBy('s.name', 'ASC');
+        $queryBuilder = $this->createQueryBuilder('service')
+            ->orderBy('service.name', 'ASC');
 
         if ($search) {
-            $qb
-                ->where('s.name LIKE :search OR s.description LIKE :search')
+            $queryBuilder
+                ->where('service.name LIKE :search OR service.description LIKE :search')
                 ->setParameter('search', '%' . $search . '%');
         }
 
         /** @var Service[] $result */
-        $result = $qb->getQuery()->getResult();
+        $result = $queryBuilder->getQuery()->getResult();
 
         return $result;
     }
