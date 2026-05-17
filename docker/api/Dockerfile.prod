@@ -1,0 +1,21 @@
+ARG PHP_VERSION=8.3
+FROM php:${PHP_VERSION}-fpm-alpine
+
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+RUN touch /var/log/php_errors.log && chmod 777 /var/log/php_errors.log
+
+RUN apk update && apk add --no-cache \
+        postgresql-dev curl libxml2-dev icu-dev \
+    && docker-php-ext-install pdo_mysql pdo_pgsql pdo bcmath intl xml pcntl \
+    && docker-php-ext-enable opcache \
+    && apk add --no-cache $PHPIZE_DEPS \
+    && pecl install redis \
+    && docker-php-ext-enable redis \
+    && rm -rf /var/cache/apk/*
+
+RUN echo "memory_limit=1024M" > /usr/local/etc/php/conf.d/memory-limit.ini \
+    && echo "error_log=/var/log/php_errors.log" > /usr/local/etc/php/conf.d/error-logging.ini
+
+WORKDIR /var/www/zhyliakovv/api
+CMD ["php-fpm"]

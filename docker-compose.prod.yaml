@@ -1,0 +1,36 @@
+version: "3"
+
+services:
+  api:
+    build:
+      dockerfile: Dockerfile.prod
+    restart: unless-stopped
+    volumes:
+      - ./docker/api/php/config/docker-opcache.ini:/usr/local/etc/php/conf.d/docker-opcache.ini
+    networks:
+      default:
+        ipv4_address: ${API_IPV4}
+
+  frontend:
+    build:
+      dockerfile: ../docker/frontend/Dockerfile.prod
+    command: serve -s dist -l 3000
+    restart: always
+
+  nginx:
+    build:
+      dockerfile: Dockerfile.prod
+    restart: unless-stopped
+    volumes:
+      - ./docker/certs/prod:/etc/nginx/certs
+    ports:
+      - 80:80
+      - 443:443
+    environment:
+      NGINX_HOST: ${NGINX_HOST_PROD}
+      NGINX_PORT: ${NGINX_PORT_PROD}
+      NGINX_CERT_CRT: ${NGINX_CERT_CRT_PROD}
+      NGINX_CERT_KEY: ${NGINX_CERT_KEY_PROD}
+    networks:
+      default:
+        ipv4_address: ${NGINX_IPV4}

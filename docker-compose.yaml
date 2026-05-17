@@ -1,0 +1,46 @@
+version: "3"
+
+services:
+  api:
+    build:
+      context: ./docker/api
+    container_name: ${PROJECT_NAME}-api
+    volumes:
+      - ./api:${API_DIRECTORY}
+    networks:
+      - default
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: ${PROJECT_NAME}-frontend
+    networks:
+      default:
+        ipv4_address: ${FRONTEND_IPV4}
+
+  nginx:
+    build:
+      context: ./docker/nginx
+    container_name: ${PROJECT_NAME}-nginx
+    volumes:
+      - ./api:${API_DIRECTORY}
+    depends_on:
+      - api
+    environment:
+      FRONTEND_DIRECTORY: ${FRONTEND_DIRECTORY}
+      API_DIRECTORY: ${API_DIRECTORY}
+    networks:
+      default:
+        ipv4_address: ${NGINX_IPV4}
+
+volumes:
+  api:
+  nginx:
+
+networks:
+  default:
+    driver: "bridge"
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.22.0.0/16
