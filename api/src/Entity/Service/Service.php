@@ -43,11 +43,11 @@ class Service
     #[ORM\OneToMany(targetEntity: Appointment::class, mappedBy: 'service')]
     private Collection $appointments;
 
-    #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
-    private \DateTimeImmutable $createdAt;
+    #[ORM\Column(type: Types::INTEGER)]
+    private int $createdAt;
 
-    #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
-    private \DateTimeImmutable $updatedAt;
+    #[ORM\Column(type: Types::INTEGER)]
+    private int $updatedAt;
 
     public function __construct()
     {
@@ -170,7 +170,7 @@ class Service
      */
     public function getCreatedAt(): \DateTimeImmutable
     {
-        return $this->createdAt;
+        return new \DateTimeImmutable('@' . $this->createdAt);
     }
 
     /**
@@ -178,7 +178,7 @@ class Service
      */
     public function getUpdatedAt(): \DateTimeImmutable
     {
-        return $this->updatedAt;
+        return new \DateTimeImmutable('@' . $this->updatedAt);
     }
 
     /**
@@ -187,8 +187,8 @@ class Service
     #[ORM\PrePersist]
     public function onPrePersist(): void
     {
-        $this->createdAt = new \DateTimeImmutable();
-        $this->updatedAt = new \DateTimeImmutable();
+        $this->createdAt = time();
+        $this->updatedAt = time();
     }
 
     /**
@@ -197,7 +197,7 @@ class Service
     #[ORM\PreUpdate]
     public function onPreUpdate(): void
     {
-        $this->updatedAt = new \DateTimeImmutable();
+        $this->updatedAt = time();
     }
 
     /**

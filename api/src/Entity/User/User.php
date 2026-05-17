@@ -33,8 +33,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(type: Types::STRING)]
     private string $password;
 
-    #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
-    private \DateTimeImmutable $createdAt;
+    #[ORM\Column(type: Types::INTEGER)]
+    private int $createdAt;
 
     /**
      * @return int
@@ -117,7 +117,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     public function getCreatedAt(): \DateTimeImmutable
     {
-        return $this->createdAt;
+        return new \DateTimeImmutable('@' . $this->createdAt);
     }
 
     /**
@@ -126,7 +126,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\PrePersist]
     public function onPrePersist(): void
     {
-        $this->createdAt = new \DateTimeImmutable();
+        $this->createdAt = time();
     }
 
     /**

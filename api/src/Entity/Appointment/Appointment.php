@@ -33,8 +33,8 @@ class Appointment
     #[ORM\JoinColumn(nullable: false)]
     private Service $service;
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    private \DateTime $scheduledAt;
+    #[ORM\Column(type: Types::INTEGER)]
+    private int $scheduledAt;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2)]
     private string $price;
@@ -45,11 +45,11 @@ class Appointment
     #[ORM\Column(type: Types::STRING, length: 20, options: ['default' => self::STATUS_PLANNED])]
     private string $status = self::STATUS_PLANNED;
 
-    #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
-    private \DateTimeImmutable $createdAt;
+    #[ORM\Column(type: Types::INTEGER)]
+    private int $createdAt;
 
-    #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
-    private \DateTimeImmutable $updatedAt;
+    #[ORM\Column(type: Types::INTEGER)]
+    private int $updatedAt;
 
     /**
      * @return int
@@ -102,7 +102,7 @@ class Appointment
      */
     public function getScheduledAt(): \DateTime
     {
-        return $this->scheduledAt;
+        return new \DateTime('@' . $this->scheduledAt);
     }
 
     /**
@@ -111,7 +111,7 @@ class Appointment
      */
     public function setScheduledAt(\DateTime $scheduledAt): self
     {
-        $this->scheduledAt = $scheduledAt;
+        $this->scheduledAt = $scheduledAt->getTimestamp();
 
         return $this;
     }
@@ -178,7 +178,7 @@ class Appointment
      */
     public function getCreatedAt(): \DateTimeImmutable
     {
-        return $this->createdAt;
+        return new \DateTimeImmutable('@' . $this->createdAt);
     }
 
     /**
@@ -186,7 +186,7 @@ class Appointment
      */
     public function getUpdatedAt(): \DateTimeImmutable
     {
-        return $this->updatedAt;
+        return new \DateTimeImmutable('@' . $this->updatedAt);
     }
 
     /**
@@ -195,8 +195,8 @@ class Appointment
     #[ORM\PrePersist]
     public function onPrePersist(): void
     {
-        $this->createdAt = new \DateTimeImmutable();
-        $this->updatedAt = new \DateTimeImmutable();
+        $this->createdAt = time();
+        $this->updatedAt = time();
     }
 
     /**
@@ -205,7 +205,7 @@ class Appointment
     #[ORM\PreUpdate]
     public function onPreUpdate(): void
     {
-        $this->updatedAt = new \DateTimeImmutable();
+        $this->updatedAt = time();
     }
 
     /**

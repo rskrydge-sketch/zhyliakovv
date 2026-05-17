@@ -44,11 +44,11 @@ class Client
     #[ORM\OrderBy(['scheduledAt' => 'DESC'])]
     private Collection $appointments;
 
-    #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
-    private \DateTimeImmutable $createdAt;
+    #[ORM\Column(type: Types::INTEGER)]
+    private int $createdAt;
 
-    #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
-    private \DateTimeImmutable $updatedAt;
+    #[ORM\Column(type: Types::INTEGER)]
+    private int $updatedAt;
 
     public function __construct()
     {
@@ -171,7 +171,7 @@ class Client
      */
     public function getCreatedAt(): \DateTimeImmutable
     {
-        return $this->createdAt;
+        return new \DateTimeImmutable('@' . $this->createdAt);
     }
 
     /**
@@ -179,7 +179,7 @@ class Client
      */
     public function getUpdatedAt(): \DateTimeImmutable
     {
-        return $this->updatedAt;
+        return new \DateTimeImmutable('@' . $this->updatedAt);
     }
 
     /**
@@ -188,8 +188,8 @@ class Client
     #[ORM\PrePersist]
     public function onPrePersist(): void
     {
-        $this->createdAt = new \DateTimeImmutable();
-        $this->updatedAt = new \DateTimeImmutable();
+        $this->createdAt = time();
+        $this->updatedAt = time();
     }
 
     /**
@@ -198,7 +198,7 @@ class Client
     #[ORM\PreUpdate]
     public function onPreUpdate(): void
     {
-        $this->updatedAt = new \DateTimeImmutable();
+        $this->updatedAt = time();
     }
 
     /**
