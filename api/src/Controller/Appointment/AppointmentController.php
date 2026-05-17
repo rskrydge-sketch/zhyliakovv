@@ -46,12 +46,14 @@ class AppointmentController extends AbstractController
         $queryParams = $request->query->all();
 
         $clientId = isset($queryParams['clientId']) ? (int)$queryParams['clientId'] : null;
-        $date = $queryParams['date'] ?? null;
-        $status = $queryParams['status'] ?? null;
-        $page = (int)($queryParams['page'] ?? 1);
-        $limit = (int)($queryParams['limit'] ?? 50);
+        $date     = $queryParams['date']     ?? null;
+        $dateFrom = $queryParams['dateFrom'] ?? null;
+        $dateTo   = $queryParams['dateTo']   ?? null;
+        $status   = $queryParams['status']   ?? null;
+        $page     = (int)($queryParams['page']  ?? 1);
+        $limit    = (int)($queryParams['limit'] ?? 50);
 
-        $result = $this->appointmentService->getList($clientId, $date, $status, $page, $limit);
+        $result = $this->appointmentService->getList($clientId, $date, $dateFrom, $dateTo, $status, $page, $limit);
         $data = array_map(fn($appointment) => $appointment->toListArray(), $result['data']);
 
         return $this->json([

@@ -42,11 +42,12 @@ axios.interceptors.request.use((config) => {
   return config;
 });
 
-// Axios interceptor — якщо 401, редіректимо на логін
+// Axios interceptor — якщо 401, редіректимо на логін (крім самого ендпоінту логіну)
 axios.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === responseStatus.HTTP_UNAUTHORIZED) {
+    const isLoginRequest = error.config?.url === '/api/auth/login';
+    if (error.response?.status === responseStatus.HTTP_UNAUTHORIZED && !isLoginRequest) {
       removeToken();
       window.location.href = '/login';
     }

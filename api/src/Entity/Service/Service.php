@@ -176,7 +176,7 @@ class Service
      */
     public function getCreatedAt(): DateTimeImmutable
     {
-        return new DateTimeImmutable('@' . $this->createdAt);
+        return (new DateTimeImmutable('@' . $this->createdAt))->setTimezone(new \DateTimeZone('Europe/Kiev'));
     }
 
     /**
@@ -185,7 +185,7 @@ class Service
      */
     public function getUpdatedAt(): DateTimeImmutable
     {
-        return new DateTimeImmutable('@' . $this->updatedAt);
+        return (new DateTimeImmutable('@' . $this->updatedAt))->setTimezone(new \DateTimeZone('Europe/Kiev'));
     }
 
     /**

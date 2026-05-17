@@ -106,7 +106,7 @@ class Appointment
      */
     public function getScheduledAt(): DateTime
     {
-        return new DateTime('@' . $this->scheduledAt);
+        return (new DateTime('@' . $this->scheduledAt))->setTimezone(new \DateTimeZone('Europe/Kiev'));
     }
 
     /**
@@ -183,7 +183,7 @@ class Appointment
      */
     public function getCreatedAt(): DateTimeImmutable
     {
-        return new DateTimeImmutable('@' . $this->createdAt);
+        return (new DateTimeImmutable('@' . $this->createdAt))->setTimezone(new \DateTimeZone('Europe/Kiev'));
     }
 
     /**
@@ -192,7 +192,7 @@ class Appointment
      */
     public function getUpdatedAt(): DateTimeImmutable
     {
-        return new DateTimeImmutable('@' . $this->updatedAt);
+        return (new DateTimeImmutable('@' . $this->updatedAt))->setTimezone(new \DateTimeZone('Europe/Kiev'));
     }
 
     /**
@@ -229,9 +229,10 @@ class Appointment
                 'phone'    => $this->getClient()->getPhone(),
             ],
             'service'     => [
-                'id'        => $this->getService()->getId(),
-                'name'      => $this->getService()->getName(),
-                'basePrice' => (float)$this->getService()->getBasePrice(),
+                'id'              => $this->getService()->getId(),
+                'name'            => $this->getService()->getName(),
+                'basePrice'       => (float)$this->getService()->getBasePrice(),
+                'durationMinutes' => $this->getService()->getDurationMinutes(),
             ],
             'scheduledAt' => $this->getScheduledAt()->format('Y-m-d H:i:s'),
             'price'       => (float)$this->getPrice(),

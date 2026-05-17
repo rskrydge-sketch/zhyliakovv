@@ -120,7 +120,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     public function getCreatedAt(): DateTimeImmutable
     {
-        return new DateTimeImmutable('@' . $this->createdAt);
+        return (new DateTimeImmutable('@' . $this->createdAt))->setTimezone(new \DateTimeZone('Europe/Kiev'));
     }
 
     /**

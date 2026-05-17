@@ -5,12 +5,15 @@ declare(strict_types=1);
 namespace App\Services\Appointment;
 
 use App\Entity\Appointment\Appointment;
+use App\Entity\Service\Service;
 use App\Repository\Entity\Appointment\AppointmentRepository;
 use App\Services\Client\ClientService;
 use App\Services\Service\ProcedureService;
 use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
+use RuntimeException;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class AppointmentService
@@ -32,14 +35,16 @@ class AppointmentService
     /**
      * @param int|null $clientId
      * @param string|null $date
+     * @param string|null $dateFrom
+     * @param string|null $dateTo
      * @param string|null $status
      * @param int $page
      * @param int $limit
      * @return array{data: Appointment[], totalItems: int}
      */
-    public function getList(?int $clientId, ?string $date, ?string $status, int $page, int $limit): array
+    public function getList(?int $clientId, ?string $date, ?string $dateFrom, ?string $dateTo, ?string $status, int $page, int $limit): array
     {
-        return $this->appointmentRepository->findByFilters($clientId, $date, $status, $page, $limit);
+        return $this->appointmentRepository->findByFilters($clientId, $date, $dateFrom, $dateTo, $status, $page, $limit);
     }
 
     /**
@@ -65,14 +70,19 @@ class AppointmentService
      */
     public function create(array $data): Appointment
     {
-        $client = $this->clientService->getById((int)$data['clientId']);
+        $client  = $this->clientService->getById((int)$data['clientId']);
         $service = $this->procedureService->getById((int)$data['serviceId']);
+
+        $scheduledAt = new DateTime($data['scheduledAt']);
+
+        // Перевіряємо накладання з існуючими записами
+        $this->checkOverlap($scheduledAt, $service);
 
         $appointment = new Appointment();
         $appointment
             ->setClient($client)
             ->setService($service)
-            ->setScheduledAt(new DateTime($data['scheduledAt']))
+            ->setScheduledAt($scheduledAt)
             ->setPrice((string)$data['price'])
             ->setNotes($data['notes'] ?? null)
             ->setStatus($data['status'] ?? Appointment::STATUS_PLANNED);
@@ -107,6 +117,11 @@ class AppointmentService
             $appointment->setScheduledAt(new DateTime($data['scheduledAt']));
         }
 
+        // Перевіряємо накладання якщо змінився час або послуга
+        if (isset($data['scheduledAt']) || isset($data['serviceId'])) {
+            $this->checkOverlap($appointment->getScheduledAt(), $appointment->getService(), $appointment->getId());
+        }
+
         if (isset($data['price'])) {
             $appointment->setPrice((string)$data['price']);
         }
@@ -122,6 +137,25 @@ class AppointmentService
         $this->entityManager->flush();
 
         return $appointment;
+    }
+
+    /**
+     * @param DateTime $scheduledAt
+     * @param Service $service
+     * @param int|null $excludeId
+     * @return void
+     * @throws RuntimeException
+     */
+    private function checkOverlap(DateTime $scheduledAt, Service $service, ?int $excludeId = null): void
+    {
+        $newStart = $scheduledAt->getTimestamp();
+        $newEnd   = $newStart + ($service->getDurationMinutes() ?? 0) * 60;
+
+        $overlapping = $this->appointmentRepository->findOverlapping($newStart, $newEnd, $excludeId);
+
+        if (count($overlapping) > 0) {
+            throw new RuntimeException('На цей час вже є запис. Оберіть інший час.', Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
     }
 
     /**

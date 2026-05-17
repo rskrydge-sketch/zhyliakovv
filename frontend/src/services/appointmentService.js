@@ -3,12 +3,14 @@ import { responseStatus } from '@/utils/consts';
 
 const defaultList = { data: [], totalItems: 0 };
 
-export const fetchAppointments = async ({ clientId, date, status, page = 1, limit = 50 } = {}) => {
+export const fetchAppointments = async ({ clientId, date, dateFrom, dateTo, status, page = 1, limit = 50 } = {}) => {
   try {
     const params = { page, limit };
-    if (clientId) params.clientId = clientId;
-    if (date) params.date = date;
-    if (status) params.status = status;
+    if (clientId)  params.clientId  = clientId;
+    if (date)      params.date      = date;
+    if (dateFrom)  params.dateFrom  = dateFrom;
+    if (dateTo)    params.dateTo    = dateTo;
+    if (status)    params.status    = status;
 
     const response = await axios.get('/api/appointments', { params });
 
@@ -22,6 +24,15 @@ export const fetchAppointments = async ({ clientId, date, status, page = 1, limi
   }
 };
 
+const extractApiError = (error, fallback) => {
+  const errors = error.response?.data?.data?.errors;
+  if (errors) {
+    const first = errors[0];
+    return Array.isArray(first) ? first[0] : first;
+  }
+  return error.response?.data?.error || fallback;
+};
+
 export const createAppointment = async (data) => {
   try {
     const response = await axios.post('/api/appointments', data);
@@ -32,8 +43,7 @@ export const createAppointment = async (data) => {
 
     return { success: false, error: 'Помилка створення запису' };
   } catch (error) {
-    const message = error.response?.data?.error || 'Помилка створення запису';
-    return { success: false, error: message };
+    return { success: false, error: extractApiError(error, 'Помилка створення запису') };
   }
 };
 
@@ -47,8 +57,7 @@ export const updateAppointment = async (id, data) => {
 
     return { success: false, error: 'Помилка оновлення запису' };
   } catch (error) {
-    const message = error.response?.data?.error || 'Помилка оновлення запису';
-    return { success: false, error: message };
+    return { success: false, error: extractApiError(error, 'Помилка оновлення запису') };
   }
 };
 

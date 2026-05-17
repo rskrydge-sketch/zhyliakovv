@@ -7,6 +7,7 @@ services:
     restart: unless-stopped
     volumes:
       - ./docker/api/php/config/docker-opcache.ini:/usr/local/etc/php/conf.d/docker-opcache.ini
+      - ./docker/api/php/config/docker-timezone.ini:/usr/local/etc/php/conf.d/docker-timezone.ini
     environment:
       PHP_IDE_CONFIG: "serverName=Docker"
     depends_on:

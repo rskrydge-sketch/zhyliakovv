@@ -4,6 +4,7 @@ import Input from '@/components/elements/Input';
 import Select from '@/components/elements/Select';
 import Textarea from '@/components/elements/Textarea';
 import Button from '@/components/elements/Button';
+import DateTimePicker from '@/components/elements/DateTimePicker';
 import { createAppointment, updateAppointment } from '@/services/appointmentService';
 import { fetchClients } from '@/services/clientService';
 import { fetchServices } from '@/services/serviceService';
@@ -89,7 +90,7 @@ const AppointmentFormModal = ({ open, onClose, onSaved, appointment = null, pres
     const payload = {
       clientId:    parseInt(form.clientId),
       serviceId:   parseInt(form.serviceId),
-      scheduledAt: new Date(form.scheduledAt).toISOString().replace('T', ' ').slice(0, 19),
+      scheduledAt: form.scheduledAt.replace('T', ' ') + ':00',
       price:       parseFloat(form.price),
       notes:       form.notes.trim() || null,
       status:      form.status,
@@ -129,9 +130,8 @@ const AppointmentFormModal = ({ open, onClose, onSaved, appointment = null, pres
           value={form.serviceId}
           onChange={set('serviceId')}
         />
-        <Input
+        <DateTimePicker
           label="Дата і час *"
-          type="datetime-local"
           value={form.scheduledAt}
           onChange={set('scheduledAt')}
         />
