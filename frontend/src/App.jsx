@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { isAuthenticated } from '@/services/authService';
+import { ToastProvider } from '@/utils/ToastContext';
 import Layout from '@/components/Layout';
 import LoginPage            from '@/pages/LoginPage';
 import ClientsPage          from '@/pages/ClientsPage';
@@ -17,6 +18,7 @@ const PrivateRoute = ({ children }) => {
 
 function App() {
   return (
+    <ToastProvider>
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
@@ -42,6 +44,7 @@ function App() {
         <Route path="*" element={<Navigate to="/clients" replace />} />
       </Routes>
     </BrowserRouter>
+    </ToastProvider>
   );
 }
 

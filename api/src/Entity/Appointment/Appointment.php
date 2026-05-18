@@ -48,6 +48,9 @@ class Appointment
     #[ORM\Column(type: Types::STRING, length: 20, options: ['default' => self::STATUS_PLANNED])]
     private string $status = self::STATUS_PLANNED;
 
+    #[ORM\Column(type: Types::STRING, length: 255, nullable: true)]
+    private ?string $googleCalendarEventId = null;
+
     #[ORM\Column(type: Types::INTEGER)]
     private int $createdAt;
 
@@ -173,6 +176,25 @@ class Appointment
     public function setStatus(string $status): self
     {
         $this->status = $status;
+
+        return $this;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getGoogleCalendarEventId(): ?string
+    {
+        return $this->googleCalendarEventId;
+    }
+
+    /**
+     * @param string|null $googleCalendarEventId
+     * @return $this
+     */
+    public function setGoogleCalendarEventId(?string $googleCalendarEventId): self
+    {
+        $this->googleCalendarEventId = $googleCalendarEventId;
 
         return $this;
     }

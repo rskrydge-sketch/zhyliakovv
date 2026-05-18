@@ -15,3 +15,8 @@ services:
     App\EventListener\RuntimeConstraintExceptionListener:
         tags:
             - { name: kernel.event_listener, event: kernel.exception }
+
+    App\Services\Google\GoogleCalendarService:
+        arguments:
+            $serviceAccountPath: '%env(resolve:GOOGLE_SERVICE_ACCOUNT_PATH)%'
+            $calendarId:         '%env(GOOGLE_CALENDAR_ID)%'

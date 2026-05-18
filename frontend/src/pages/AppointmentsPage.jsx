@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Calendar, ChevronLeft, ChevronRight, User, Scissors, List, Pencil, Trash2, Check, X, RotateCcw } from 'lucide-react';
 import { fetchAppointments, updateAppointment, deleteAppointment } from '@/services/appointmentService';
+import { useToast } from '@/utils/ToastContext';
 import Card from '@/components/elements/Card';
 import Button from '@/components/elements/Button';
 import Badge from '@/components/elements/Badge';
@@ -19,7 +20,8 @@ const toDateStr = (date) => {
 const weekdayIndex = (date) => (new Date(date).getDay() + 6) % 7;
 
 const AppointmentsPage = () => {
-  const navigate = useNavigate();
+  const navigate       = useNavigate();
+  const { showToast }  = useToast();
 
   const [view, setView]                 = useState('day');
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -92,20 +94,23 @@ const AppointmentsPage = () => {
     setView('day');
   };
 
-  const handleSaved = () => {
+  const handleSaved = (_data, isNew) => {
     setShowForm(false);
     setEditingAppt(null);
+    showToast(isNew ? 'Запис успішно створено' : 'Запис оновлено');
     if (view === 'day') loadDay(); else loadMonth();
   };
 
   const handleStatusChange = async (appt, status) => {
     await updateAppointment(appt.id, { status });
+    showToast('Статус оновлено');
     loadDay();
   };
 
   const handleDelete = async (appt) => {
     if (!window.confirm(`Видалити запис для ${appt.client?.nickname}?`)) return;
     await deleteAppointment(appt.id);
+    showToast('Запис видалено');
     loadDay();
   };
 

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Edit, Trash2, User, Scissors, Calendar, DollarSign } from 'lucide-react';
 import { fetchAppointments, deleteAppointment, updateAppointment } from '@/services/appointmentService';
+import { useToast } from '@/utils/ToastContext';
 import Button from '@/components/elements/Button';
 import Badge from '@/components/elements/Badge';
 import Card from '@/components/elements/Card';
@@ -9,8 +10,9 @@ import AppointmentFormModal from '@/components/appointments/AppointmentFormModal
 import { appointmentStatuses, appointmentStatusColors } from '@/utils/consts';
 
 const AppointmentDetailPage = () => {
-  const { id }   = useParams();
-  const navigate = useNavigate();
+  const { id }        = useParams();
+  const navigate      = useNavigate();
+  const { showToast } = useToast();
 
   const [appointment, setAppointment] = useState(null);
   const [loading, setLoading]         = useState(true);
@@ -35,12 +37,12 @@ const AppointmentDetailPage = () => {
   const handleDelete = async () => {
     if (!window.confirm('Видалити запис?')) return;
     const result = await deleteAppointment(id);
-    if (result.success) navigate('/appointments');
+    if (result.success) { showToast('Запис видалено'); navigate('/appointments'); }
   };
 
   const handleStatusChange = async (status) => {
     const result = await updateAppointment(id, { status });
-    if (result.success) setAppointment((prev) => ({ ...prev, status }));
+    if (result.success) { showToast('Статус оновлено'); setAppointment((prev) => ({ ...prev, status })); }
   };
 
   if (loading) {
@@ -141,7 +143,7 @@ const AppointmentDetailPage = () => {
       <AppointmentFormModal
         open={showEdit}
         onClose={() => setShowEdit(false)}
-        onSaved={(data) => { setShowEdit(false); setAppointment(data); }}
+        onSaved={(data) => { setShowEdit(false); setAppointment(data); showToast('Запис оновлено'); }}
         appointment={appointment}
       />
     </div>

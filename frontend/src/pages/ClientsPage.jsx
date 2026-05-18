@@ -1,19 +1,23 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, User, Phone, AtSign } from 'lucide-react';
+import { Plus, Search, User, Phone, AtSign, CalendarPlus } from 'lucide-react';
 import { fetchClients } from '@/services/clientService';
+import { useToast } from '@/utils/ToastContext';
 import Card from '@/components/elements/Card';
 import Button from '@/components/elements/Button';
 import ClientFormModal from '@/components/clients/ClientFormModal';
+import AppointmentFormModal from '@/components/appointments/AppointmentFormModal';
 
 const ClientsPage = () => {
-  const navigate = useNavigate();
+  const navigate      = useNavigate();
+  const { showToast } = useToast();
 
-  const [clients, setClients]       = useState([]);
-  const [totalItems, setTotalItems] = useState(0);
-  const [search, setSearch]         = useState('');
-  const [loading, setLoading]       = useState(true);
-  const [showForm, setShowForm]     = useState(false);
+  const [clients, setClients]                   = useState([]);
+  const [totalItems, setTotalItems]             = useState(0);
+  const [search, setSearch]                     = useState('');
+  const [loading, setLoading]                   = useState(true);
+  const [showForm, setShowForm]                 = useState(false);
+  const [appointmentClientId, setAppointmentClientId] = useState(null);
 
   const loadClients = useCallback(async () => {
     setLoading(true);
@@ -28,8 +32,9 @@ const ClientsPage = () => {
     return () => clearTimeout(timer);
   }, [loadClients]);
 
-  const handleClientCreated = () => {
+  const handleClientCreated = (_data, isNew) => {
     setShowForm(false);
+    showToast(isNew ? 'Клієнта створено' : 'Клієнта оновлено');
     loadClients();
   };
 
@@ -96,6 +101,13 @@ const ClientsPage = () => {
                     )}
                   </div>
                 </div>
+                <button
+                  onClick={(e) => { e.stopPropagation(); setAppointmentClientId(client.id); }}
+                  className="p-2 rounded-xl text-gray-400 hover:text-pink-500 hover:bg-pink-50 transition-colors flex-shrink-0 self-center"
+                  title="Новий запис"
+                >
+                  <CalendarPlus size={18} />
+                </button>
               </div>
             </Card>
           ))
@@ -106,6 +118,13 @@ const ClientsPage = () => {
         open={showForm}
         onClose={() => setShowForm(false)}
         onSaved={handleClientCreated}
+      />
+
+      <AppointmentFormModal
+        open={!!appointmentClientId}
+        onClose={() => setAppointmentClientId(null)}
+        onSaved={() => { setAppointmentClientId(null); showToast('Запис успішно створено'); }}
+        preselectedClientId={appointmentClientId}
       />
     </div>
   );

@@ -1,12 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Plus, Scissors, Search, Edit, Trash2 } from 'lucide-react';
 import { fetchServices, deleteService } from '@/services/serviceService';
+import { useToast } from '@/utils/ToastContext';
 import Card from '@/components/elements/Card';
 import Button from '@/components/elements/Button';
 import Badge from '@/components/elements/Badge';
 import ServiceFormModal from '@/components/services/ServiceFormModal';
 
 const ServicesPage = () => {
+  const { showToast } = useToast();
+
   const [services, setServices]     = useState([]);
   const [search, setSearch]         = useState('');
   const [loading, setLoading]       = useState(true);
@@ -28,12 +31,13 @@ const ServicesPage = () => {
   const handleDelete = async (service) => {
     if (!window.confirm(`Видалити послугу "${service.name}"?`)) return;
     const result = await deleteService(service.id);
-    if (result.success) loadServices();
+    if (result.success) { showToast('Послугу видалено'); loadServices(); }
   };
 
-  const handleSaved = () => {
+  const handleSaved = (_data, isNew) => {
     setShowForm(false);
     setEditService(null);
+    showToast(isNew ? 'Послугу створено' : 'Послугу оновлено');
     loadServices();
   };
 

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Phone, AtSign, Edit, Trash2, Plus, User, Calendar } from 'lucide-react';
 import { fetchClient, deleteClient } from '@/services/clientService';
+import { useToast } from '@/utils/ToastContext';
 import Button from '@/components/elements/Button';
 import Badge from '@/components/elements/Badge';
 import Card from '@/components/elements/Card';
@@ -10,8 +11,9 @@ import AppointmentFormModal from '@/components/appointments/AppointmentFormModal
 import { appointmentStatuses, appointmentStatusColors } from '@/utils/consts';
 
 const ClientDetailPage = () => {
-  const { id }     = useParams();
-  const navigate   = useNavigate();
+  const { id }        = useParams();
+  const navigate      = useNavigate();
+  const { showToast } = useToast();
 
   const [client, setClient]             = useState(null);
   const [loading, setLoading]           = useState(true);
@@ -32,16 +34,18 @@ const ClientDetailPage = () => {
   const handleDelete = async () => {
     if (!window.confirm('Видалити клієнта? Всі записи також будуть видалені.')) return;
     const result = await deleteClient(id);
-    if (result.success) navigate('/clients');
+    if (result.success) { showToast('Клієнта видалено'); navigate('/clients'); }
   };
 
-  const handleClientSaved = (updated) => {
+  const handleClientSaved = (updated, isNew) => {
     setShowEdit(false);
     setClient((prev) => ({ ...prev, ...updated }));
+    showToast(isNew ? 'Клієнта створено' : 'Клієнта оновлено');
   };
 
   const handleAppointmentSaved = () => {
     setShowNewAppt(false);
+    showToast('Запис створено');
     loadClient();
   };
 

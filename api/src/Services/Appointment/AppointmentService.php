@@ -8,6 +8,7 @@ use App\Entity\Appointment\Appointment;
 use App\Entity\Service\Service;
 use App\Repository\Entity\Appointment\AppointmentRepository;
 use App\Services\Client\ClientService;
+use App\Services\Google\GoogleCalendarService;
 use App\Services\Service\ProcedureService;
 use DateTime;
 use Doctrine\ORM\EntityManagerInterface;
@@ -24,12 +25,14 @@ class AppointmentService
      * @param AppointmentRepository $appointmentRepository
      * @param ClientService $clientService
      * @param ProcedureService $procedureService
+     * @param GoogleCalendarService $googleCalendarService
      */
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
         private readonly AppointmentRepository  $appointmentRepository,
         private readonly ClientService          $clientService,
-        private readonly ProcedureService       $procedureService
+        private readonly ProcedureService       $procedureService,
+        private readonly GoogleCalendarService  $googleCalendarService
     ) {}
 
     /**
@@ -70,7 +73,7 @@ class AppointmentService
      */
     public function create(array $data): Appointment
     {
-        $client  = $this->clientService->getById((int)$data['clientId']);
+        $client = $this->clientService->getById((int)$data['clientId']);
         $service = $this->procedureService->getById((int)$data['serviceId']);
 
         $scheduledAt = new DateTime($data['scheduledAt']);
@@ -79,6 +82,7 @@ class AppointmentService
         $this->checkOverlap($scheduledAt, $service);
 
         $appointment = new Appointment();
+
         $appointment
             ->setClient($client)
             ->setService($service)
@@ -89,6 +93,15 @@ class AppointmentService
 
         $this->entityManager->persist($appointment);
         $this->entityManager->flush();
+
+        // Синхронізуємо з Google Calendar
+        $googleEventId = $this->googleCalendarService->createEvent($appointment);
+
+        if ($googleEventId) {
+            $appointment->setGoogleCalendarEventId($googleEventId);
+
+            $this->entityManager->flush();
+        }
 
         return $appointment;
     }
@@ -136,6 +149,9 @@ class AppointmentService
 
         $this->entityManager->flush();
 
+        // Синхронізуємо зміни з Google Calendar
+        $this->googleCalendarService->updateEvent($appointment);
+
         return $appointment;
     }
 
@@ -149,7 +165,7 @@ class AppointmentService
     private function checkOverlap(DateTime $scheduledAt, Service $service, ?int $excludeId = null): void
     {
         $newStart = $scheduledAt->getTimestamp();
-        $newEnd   = $newStart + ($service->getDurationMinutes() ?? 0) * 60;
+        $newEnd = $newStart + ($service->getDurationMinutes() ?? 0) * 60;
 
         $overlapping = $this->appointmentRepository->findOverlapping($newStart, $newEnd, $excludeId);
 
@@ -166,9 +182,15 @@ class AppointmentService
     public function delete(int $id): void
     {
         $appointment = $this->getById($id);
+        $googleEventId = $appointment->getGoogleCalendarEventId();
 
         $this->entityManager->remove($appointment);
         $this->entityManager->flush();
+
+        // Видаляємо подію з Google Calendar
+        if ($googleEventId) {
+            $this->googleCalendarService->deleteEvent($googleEventId);
+        }
     }
 
 }

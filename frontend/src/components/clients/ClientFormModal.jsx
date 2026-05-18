@@ -52,7 +52,7 @@ const ClientFormModal = ({ open, onClose, onSaved, client = null }) => {
       : await createClient(payload);
 
     if (result.success) {
-      onSaved(result.data);
+      onSaved(result.data, !isEdit);
     } else {
       setError(result.error);
     }

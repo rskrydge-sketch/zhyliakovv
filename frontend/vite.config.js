@@ -16,7 +16,7 @@ export default defineConfig({
   server: {
     port: 3000,
     host: true,
-    allowedHosts: ['zhyliakovv.local', 'zhyliakovv.com', 'localhost'],
+    allowedHosts: ['zhyliakovv.local', 'zhyliakovv.com', 'localhost', '1e53-46-219-2-37.ngrok-free.app'],
   },
   preview: {
     port: 3000,

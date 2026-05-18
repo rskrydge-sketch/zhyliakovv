@@ -50,7 +50,7 @@ const ServiceFormModal = ({ open, onClose, onSaved, service = null }) => {
       : await createService(payload);
 
     if (result.success) {
-      onSaved(result.data);
+      onSaved(result.data, !isEdit);
     } else {
       setError(result.error);
     }

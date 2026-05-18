@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import Modal from '@/components/elements/Modal';
 import Input from '@/components/elements/Input';
 import Select from '@/components/elements/Select';
+import SearchableSelect from '@/components/elements/SearchableSelect';
 import Textarea from '@/components/elements/Textarea';
 import Button from '@/components/elements/Button';
 import DateTimePicker from '@/components/elements/DateTimePicker';
@@ -101,7 +102,7 @@ const AppointmentFormModal = ({ open, onClose, onSaved, appointment = null, pres
       : await createAppointment(payload);
 
     if (result.success) {
-      onSaved(result.data);
+      onSaved(result.data, !isEdit);
     } else {
       setError(result.error);
     }
@@ -109,13 +110,17 @@ const AppointmentFormModal = ({ open, onClose, onSaved, appointment = null, pres
     setLoading(false);
   };
 
-  const clientOptions  = clients.map((c) => ({ value: c.id, label: `${c.nickname}${c.name ? ' — ' + c.name : ''}` }));
+  const clientOptions  = clients.map((c) => ({
+    value:      c.id,
+    label:      `${c.nickname}${c.name ? ' — ' + c.name : ''}`,
+    searchText: [c.nickname, c.name, c.phone, c.instagram].filter(Boolean).join(' ').toLowerCase(),
+  }));
   const serviceOptions = services.map((s) => ({ value: s.id, label: `${s.name} (${s.basePrice} грн)` }));
 
   return (
     <Modal open={open} onClose={onClose} title={isEdit ? 'Редагувати запис' : 'Новий запис'}>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <Select
+        <SearchableSelect
           label="Клієнт *"
           placeholder="Оберіть клієнта..."
           options={clientOptions}

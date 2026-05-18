@@ -1,4 +1,5 @@
-import { NavLink, useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
+import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { Users, Calendar, Scissors, LogOut } from 'lucide-react';
 import { logout } from '@/services/authService';
 import { cn } from '@/utils/cn';
@@ -10,7 +11,12 @@ const navItems = [
 ];
 
 const Layout = ({ children }) => {
-  const navigate = useNavigate();
+  const navigate       = useNavigate();
+  const { pathname }   = useLocation();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
 
   const handleLogout = () => {
     logout();
