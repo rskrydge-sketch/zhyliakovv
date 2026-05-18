@@ -8,6 +8,7 @@ use App\Entity\User\User;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
@@ -32,6 +33,16 @@ class CreateAdminCommand extends Command
     }
 
     /**
+     * @return void
+     */
+    protected function configure(): void
+    {
+        $this
+            ->addArgument('email', InputArgument::REQUIRED, 'Email адміністратора')
+            ->addArgument('password', InputArgument::REQUIRED, 'Пароль адміністратора');
+    }
+
+    /**
      * @param InputInterface  $input
      * @param OutputInterface $output
      * @return int
@@ -40,8 +51,11 @@ class CreateAdminCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
 
-        $email    = $_ENV['ADMIN_EMAIL'] ?? 'admin@zhyliakovv-hair.pp.ua';
-        $password = $_ENV['ADMIN_PASSWORD'] ?? 'admin123';
+        /** @var string $email */
+        $email = $input->getArgument('email');
+
+        /** @var string $password */
+        $password = $input->getArgument('password');
 
         // Перевіряємо чи адмін вже існує
         $existing = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $email]);
