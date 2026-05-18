@@ -54,5 +54,24 @@ services:
       default:
         ipv4_address: ${MYSQL_IPV4}
 
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: ${PROJECT_NAME}-phpmyadmin
+    restart: unless-stopped
+    ports:
+      - 8080:80
+    depends_on:
+      - mysql
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      MYSQL_ROOT_PASSWORD: ${PHPMYADMIN_ROOT_PASSWORD}
+      MYSQL_USER: ${PHPMYADMIN_MYSQL_USER}
+      MYSQL_PASSWORD: ${PHPMYADMIN_MYSQL_PASSWORD}
+      UPLOAD_LIMIT: 20M
+    networks:
+      default:
+        ipv4_address: ${PHPMYADMIN_IPV4}
+
 volumes:
   mysql:
