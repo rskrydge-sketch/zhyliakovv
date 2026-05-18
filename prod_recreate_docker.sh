@@ -11,7 +11,10 @@ echo -e ""
 docker stop $(docker ps -aq)
 docker rm $(docker ps -aq)
 
-cp environment_data/api/.env.prod api/.env.local
+if [ ! -f api/.env.local ]; then
+    cp environment_data/api/.env.prod api/.env.local
+    echo -e "${GREEN}api/.env.local created from template — fill in real credentials!${NC}"
+fi
 
 docker compose -f docker-compose.yaml -f docker-compose.prod.yaml up --build -d
 docker compose exec api composer install --no-dev --optimize-autoloader
