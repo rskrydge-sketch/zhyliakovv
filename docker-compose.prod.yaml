@@ -5,6 +5,8 @@ services:
     build:
       dockerfile: Dockerfile.prod
     restart: unless-stopped
+    depends_on:
+      - mysql
     volumes:
       - ./docker/api/php/config/docker-opcache.ini:/usr/local/etc/php/conf.d/docker-opcache.ini
     networks:
@@ -34,3 +36,21 @@ services:
     networks:
       default:
         ipv4_address: ${NGINX_IPV4}
+
+  mysql:
+    image: mysql:8.0
+    container_name: ${PROJECT_NAME}-mysql
+    restart: unless-stopped
+    volumes:
+      - mysql:/var/lib/mysql
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    networks:
+      default:
+        ipv4_address: ${MYSQL_IPV4}
+
+volumes:
+  mysql:
