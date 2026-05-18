@@ -14,7 +14,7 @@ This file provides guidance to Claude Code when working with code in this reposi
 - nginx 1.27, Node 22
 - Environments: `local` (dev mode) and `prod` only
 
-**Domains:** `zhyliakovv.local` (local) / `zhyliakovv.com` (prod)
+**Domains:** `zhyliakovv.local` (local) / `zhyliakovv-hair.pp.ua` (prod)
 
 **Docker:**
 ```shell

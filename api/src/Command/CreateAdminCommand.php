@@ -40,7 +40,7 @@ class CreateAdminCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
 
-        $email    = $_ENV['ADMIN_EMAIL'] ?? 'admin@zhyliakovv.com';
+        $email    = $_ENV['ADMIN_EMAIL'] ?? 'admin@zhyliakovv-hair.pp.ua';
         $password = $_ENV['ADMIN_PASSWORD'] ?? 'admin123';
 
         // Перевіряємо чи адмін вже існує
