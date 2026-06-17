@@ -76,7 +76,7 @@ class AppointmentService
         $client = $this->clientService->getById((int)$data['clientId']);
         $service = $this->procedureService->getById((int)$data['serviceId']);
 
-        $scheduledAt = new DateTime($data['scheduledAt']);
+        $scheduledAt = new DateTime($data['scheduledAt'], new \DateTimeZone('Europe/Kiev'));
 
         // Перевіряємо накладання з існуючими записами
         $this->checkOverlap($scheduledAt, $service);
@@ -127,7 +127,7 @@ class AppointmentService
         }
 
         if (isset($data['scheduledAt'])) {
-            $appointment->setScheduledAt(new DateTime($data['scheduledAt']));
+            $appointment->setScheduledAt(new DateTime($data['scheduledAt'], new \DateTimeZone('Europe/Kiev')));
         }
 
         // Перевіряємо накладання якщо змінився час або послуга

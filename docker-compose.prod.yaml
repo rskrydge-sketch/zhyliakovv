@@ -9,6 +9,7 @@ services:
       - mysql
     volumes:
       - ./docker/api/php/config/docker-opcache.ini:/usr/local/etc/php/conf.d/docker-opcache.ini
+      - ./docker/api/php/config/docker-timezone.ini:/usr/local/etc/php/conf.d/docker-timezone.ini
     networks:
       default:
         ipv4_address: ${API_IPV4}
