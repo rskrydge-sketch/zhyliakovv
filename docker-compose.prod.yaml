@@ -55,6 +55,53 @@ services:
       default:
         ipv4_address: ${MYSQL_IPV4}
 
+  backup:
+    image: databack/mysql-backup:1.2.2
+    container_name: ${PROJECT_NAME}-mysql-backup
+    restart: unless-stopped
+    depends_on:
+      - mysql
+    command: [ "dump" ]
+    environment:
+      DB_SERVER: mysql
+      DB_PORT: 3306
+      DB_USER: ${MYSQL_USER}
+      DB_PASS: ${MYSQL_PASSWORD}
+      DB_NAMES: ${MYSQL_DATABASE}
+      DB_DUMP_FREQUENCY: 1440           # щоденний дамп
+      DB_DUMP_BEGIN: "0100"             # перший запуск о 01:00
+      DB_DUMP_TARGET: /db
+      DB_DUMP_RETENTION: 2c             # локально тримаємо 2 останні дампи
+    volumes:
+      - ./docker/backup:/db
+    networks:
+      - default
+
+  rclone:
+    image: rclone/rclone:latest
+    container_name: ${PROJECT_NAME}-rclone
+    restart: unless-stopped
+    depends_on:
+      - backup
+    environment:
+      RCLONE_CONFIG: /config/rclone/rclone.conf
+    volumes:
+      - ./docker/backup:/db              # спільний том з дампами
+      - ./docker/rclone:/config/rclone
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        while true; do
+          rclone copy /db Dropbox:${PROJECT_NAME}_mysqldump/ \
+            --config /config/rclone/rclone.conf \
+            --exclude .gitkeep \
+            --verbose
+          sleep 3600
+        done
+    networks:
+      - default
+
 
 volumes:
   mysql:
