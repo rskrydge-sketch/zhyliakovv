@@ -10,6 +10,7 @@ use Google\Client;
 use Google\Service\Calendar;
 use Google\Service\Calendar\Event;
 use Google\Service\Calendar\EventDateTime;
+use Google\Service\Exception as GoogleServiceException;
 use Psr\Log\LoggerInterface;
 
 class GoogleCalendarService
@@ -79,6 +80,36 @@ class GoogleCalendarService
             $this->getCalendar()->events->delete($this->calendarId, $googleEventId);
         } catch (Exception $exception) {
             $this->logger->error('Google Calendar deleteEvent failed: ' . $exception->getMessage());
+        }
+    }
+
+    /**
+     * Повертає подію з Google Calendar або null, якщо її видалено/скасовано
+     *
+     * @param string $googleEventId
+     * @return Event|null
+     * @throws GoogleServiceException  на тимчасових помилках API (мережа, ліміти)
+     * @throws \Google\Exception
+     */
+    public function getEvent(string $googleEventId): ?Event
+    {
+        try {
+            $event = $this->getCalendar()->events->get($this->calendarId, $googleEventId);
+
+            // Google повертає видалені події зі статусом "cancelled"
+            if ($event->getStatus() === 'cancelled') {
+                return null;
+            }
+
+            return $event;
+        } catch (GoogleServiceException $exception) {
+            // 404/410 — подію остаточно видалено з календаря
+            if (in_array($exception->getCode(), [404, 410], true)) {
+                return null;
+            }
+
+            // Інші коди — тимчасові помилки, прокидаємо далі, щоб не зіпсувати дані
+            throw $exception;
         }
     }
 

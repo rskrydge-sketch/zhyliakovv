@@ -52,6 +52,28 @@ class AppointmentRepository extends ServiceEntityRepository
     }
 
     /**
+     * Повертає заплановані записи, прив'язані до події Google Calendar, від вказаного часу
+     *
+     * @param int $fromTimestamp
+     * @return Appointment[]
+     */
+    public function findPlannedWithGoogleEvent(int $fromTimestamp): array
+    {
+        $queryBuilder = $this->createQueryBuilder('appointment')
+            ->where('appointment.status = :planned')
+            ->andWhere('appointment.googleCalendarEventId IS NOT NULL')
+            ->andWhere('appointment.scheduledAt >= :fromTimestamp')
+            ->setParameter('planned', Appointment::STATUS_PLANNED)
+            ->setParameter('fromTimestamp', $fromTimestamp)
+            ->orderBy('appointment.scheduledAt', 'ASC');
+
+        /** @var Appointment[] $result */
+        $result = $queryBuilder->getQuery()->getResult();
+
+        return $result;
+    }
+
+    /**
      * @param int|null $clientId
      * @param string|null $date
      * @param string|null $dateFrom
